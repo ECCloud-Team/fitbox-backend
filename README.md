@@ -6,7 +6,7 @@ This project is an application skeleton for a typical [Node.js](https://nodejs.o
 To get you started you can simply clone the repository:
 
 ```
-git clone https://github.com/FortechRomania/express-mongo-example-project
+git clone https://github.com/ECCloud-Team/file-management
 ```
 and install the dependencies
 ```
