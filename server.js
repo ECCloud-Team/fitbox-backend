@@ -1,6 +1,7 @@
 const express = require('express');
 const connectDB = require('./config/db');
 const dotenv = require('dotenv');
+const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 
@@ -10,6 +11,9 @@ const app = express();
 
 // Connect Database
 connectDB();
+
+// Enable CORS
+app.use(cors());
 
 // Init Middleware
 app.use(express.json());

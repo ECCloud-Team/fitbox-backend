@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "eco-groove-424409-u1",
+  "private_key_id": "61f6c18f31a9efa59ac2bf14a588394aa81001d6",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDS5hu50woStBUq\nlDbnHt4Q8hTmBVJQt+EqOgF/J7RVpQp45W2rejSBMzed8Jv6RR0qAxa8YKBuwyuV\nJGLZlYmPvuSWKDTL35UDulZybOrodvds0HtobomvQQd5zqAQsOkAwIwJlKXZpBQc\nMIf0Xyuz0sh9lmcza6J+sfQiHC5uolyCj0Fwa/jKiSUKVqt2wdusDH6VdxJEvdff\nYdEWveJASfVzrO2D6XNWyI9rneiNr6UNzSYXClxsH2lC5LyPFRNdOX7YRKMK12My\nxGvrkswK8MHTGyoMfqyyJ9a6aN4UCNnooStha9iMxXXxKNiibFOsst2WZWNHTJGa\n4nojHskFAgMBAAECggEADJxu7wAA7uWVPtXcqWbHbHSVYSKgIMYfsQwFhLCynQAN\nlFu5YNLundIBH7DztGKUOZI0UCQB1yDuxvA4kWTap3ciQx2Skdhdfq4Sg+AiDq/1\nrRLGz/omjvP3OizryTCGL+6garHYiWwOBphOVB1DlAqxxQ5ZchICUv7zWspo0Mh8\nsDlOigaV65RTUiu4TvmpIMNfTnLCJTnGrBDsAjVLcWPSPPg+IiwWMMvaqKfCd67J\nCdXCzVQMvkIAIfgRw8wEcJ9a2uSGx/lfkp0bJIujv6MwKYiIG5jvM8/OKatkK+GQ\nLbKAPDKYCKLBZHFcuS2LeAncIQ5qSe0TPNRgxxHQZwKBgQDpjAEM1ExmDcWASZxE\nwLpJPWjNCUCwtfQb7eH2MQZio9Xvdg065J6v0Hz0ShIXi0hXaNnKfciJkVAnQiHl\na0xjvu1m7bmsH9Y2+vysRg7Lv9Ha8DCCn/vKMGmla52jGscteliG5A79MEXSRc3s\nFDFhS2BIeWAOAxb4U/dBVuz/uwKBgQDnLLJbxQ3T/Fdu/2J50ZrkOS81fscJNR2h\nZ+MoCyXBnAST+wTEfMymm0f6FFsfQj+J9q9C3GnvSjsM4hP79XaphwrFO163J52W\nzVeM2M2R5zReFsw1ykMddYiGEWKmV71UL8NYiyhIHjm6LiaYRyPF7Y8qntFP8JcD\nT7XiTGTuPwKBgC0O2dUD0ImP9p69lOye0lH3CxUjx9tP/3yz9HhvFPBK86dzezH1\nkbgR3Um0ULFCKf7TN9GdWudPpcstMyT0ApTr7RmCm+PdcJLC8aS7D3e31mELHhDV\nlNp5ZKiJjqw9KlhX1mSP82Rdv9rFpOj7LFu9EyJoaGPLrM7UREvS3X6pAoGASJ1n\noR/yygXXyQv7eNx4VPwJcjpSdvfySMMDPY7S21AQuBL/WmEBP8xC/bDrNpRutP2B\n6/Skaf/dMJzLPjfKgFHk9jNB+zI8dCQoPhvT5uLDNlLe7n6MOnKy4boQTMP+urUO\nHYAItS6ZX3wjr22ZNRD8CZ09jmi6ZtXhAiaRBa0CgYBRx7PsuEQnKZ2/H+Afd6Mf\nUK4nXwe5oYaljT85d1h1MldZsvPr607oG02OJLskITnkUKL5vYYSG6t7B41Fa0rk\nVNPXG9b+YXjAKl6vNkKkjWLpymgt7BWopw75U8TuU4x0Qll60zAtZOBwWL4DT5Tm\nlwC46kzAlQ7eimHcyWabBw==\n-----END PRIVATE KEY-----\n",
+  "client_email": "file-storage@eco-groove-424409-u1.iam.gserviceaccount.com",
+  "client_id": "110777017625197129184",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/file-storage%40eco-groove-424409-u1.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
