@@ -18,6 +18,12 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// Fungsi untuk menghitung total ukuran file
+const getTotalFileSize = async (user_id) => {
+  const files = await File.find({ user_id });
+  return files.reduce((total, file) => total + file.size, 0);
+};
+
 // @route   POST /files/upload
 // @desc    Upload a file
 // @access  Public
@@ -86,8 +92,9 @@ router.get("/root/:user_id", async (req, res) => {
 router.get("/:user_id", async (req, res) => {
   try {
     const files = await File.find({ user_id: req.params.user_id });
-    log(`All files retrieved for user ${req.params.user_id}`, 'GET', req.params.user_id);
-    res.json(files);
+    const totalSize = await getTotalFileSize(req.params.user_id);
+    log(`All files retrieved for user ${req.params.user_id}. Total size: ${totalSize} bytes`, 'GET', req.params.user_id, totalSize);
+    res.json({ files, totalSize });
   } catch (err) {
     log(`Get user files error: ${err.message}`, 'GET', req.params.user_id);
     console.error(err.message);
