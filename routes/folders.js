@@ -1,6 +1,8 @@
+// routes/folders.js
 const express = require('express');
 const Folder = require('../models/Folder');
 const File = require('../models/File');
+const log = require('../middleware/logger'); // Import logger
 const router = express.Router();
 
 // Recursive function to build the folder tree
@@ -34,8 +36,10 @@ router.post('/', async (req, res) => {
             parent_id: parent_id || null
         });
         await folder.save();
+        log(`Folder created: ${folder.name} by user ${user_id}`);
         res.json(folder);
     } catch (err) {
+        log(`Folder creation error: ${err.message}`);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -48,10 +52,13 @@ router.get('/folder/:id', async (req, res) => {
     try {
         const folder = await Folder.findById(req.params.id);
         if (!folder) {
+            log(`Folder not found: ${req.params.id}`);
             return res.status(404).json({ msg: 'Folder not found' });
         }
+        log(`Folder retrieved: ${folder.name}`);
         res.json(folder);
     } catch (err) {
+        log(`Get folder error: ${err.message}`);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -65,12 +72,15 @@ router.put('/rename/:id', async (req, res) => {
     try {
         const folder = await Folder.findById(req.params.id);
         if (!folder) {
+            log(`Folder not found for renaming: ${req.params.id}`);
             return res.status(404).json({ msg: 'Folder not found' });
         }
         folder.name = req.body.name;
         await folder.save();
+        log(`Folder renamed to: ${folder.name}`);
         res.json(folder);
     } catch (err) {
+        log(`Rename folder error: ${err.message}`);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -83,8 +93,10 @@ router.get('/:user_id', async (req, res) => {
     try {
         const folders = await Folder.find({ user_id: req.params.user_id });
         const files = await File.find({ user_id: req.params.user_id });
+        log(`All folders and files retrieved for user ${req.params.user_id}`);
         res.json({ folders, files });
     } catch (err) {
+        log(`Get all folders and files error: ${err.message}`);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -97,6 +109,7 @@ router.delete('/:id', async (req, res) => {
     try {
         const folder = await Folder.findById(req.params.id);
         if (!folder) {
+            log(`Folder not found for deletion: ${req.params.id}`);
             return res.status(404).json({ msg: 'Folder not found' });
         }
         // Remove files in the folder
@@ -105,8 +118,10 @@ router.delete('/:id', async (req, res) => {
         await Folder.deleteMany({ parent_id: folder._id });
         // Remove the folder itself
         await Folder.deleteOne({ _id: folder._id });
+        log(`Folder and its contents deleted: ${folder.name}`);
         res.json({ msg: 'Folder removed' });
     } catch (err) {
+        log(`Delete folder error: ${err.message}`);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -119,8 +134,10 @@ router.delete('/:id', async (req, res) => {
 router.get('/folder-tree/:user_id', async (req, res) => {
     try {
         const folderTree = await buildFolderTree(req.params.user_id);
+        log(`Folder tree retrieved for user: ${req.params.user_id}`);
         res.json(folderTree);
     } catch (err) {
+        log(`Get folder tree error: ${err.message}`);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -133,8 +150,10 @@ router.get('/folder-tree/:user_id', async (req, res) => {
 router.get('/parent/:parent_id', async (req, res) => {
     try {
         const folders = await Folder.find({ parent_id: req.params.parent_id });
+        log(`Folders retrieved for parent: ${req.params.parent_id}`);
         res.json(folders);
     } catch (err) {
+        log(`Get folders in parent error: ${err.message}`);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -147,14 +166,13 @@ router.get('/parent/:parent_id', async (req, res) => {
 router.get('/root/:user_id', async (req, res) => {
     try {
         const folders = await Folder.find({ user_id: req.params.user_id, parent_id: null });
+        log(`Root folders retrieved for user: ${req.params.user_id}`);
         res.json(folders);
     } catch (err) {
+        log(`Get root folders error: ${err.message}`);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 });
 
-
-
 module.exports = router;
-
