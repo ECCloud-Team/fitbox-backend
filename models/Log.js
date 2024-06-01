@@ -3,9 +3,17 @@ const mongoose = require('mongoose');
 const LogSchema = new mongoose.Schema({
     user_id: {
         type: String,
-        required: false // Mengubah menjadi opsional (teradi validation err jika 'true')
+        required: false
     },
     message: {
+        type: String,
+        required: true
+    },
+    size: {
+        type: Number,
+        required: false
+    },
+    type: {
         type: String,
         required: true
     },

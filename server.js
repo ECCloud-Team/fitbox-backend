@@ -10,9 +10,9 @@ const app = express();
 
 // Connect Database
 connectDB().then(() => {
-    log('MongoDB connected...');
+    log('MongoDB connected...', 'INFO');
 }).catch(err => {
-    log(`MongoDB connection error: ${err.message}`);
+    log(`MongoDB connection error: ${err.message}`, 'ERROR');
 });
 
 // Enable CORS
@@ -32,6 +32,6 @@ app.use('/uploads', express.static('uploads'));
 const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
-    log(`Server started on port ${PORT}`);
+    log(`Server started on port ${PORT}`, 'INFO');
     console.log(`Server started on port ${PORT}`);
 });
