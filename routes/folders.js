@@ -36,7 +36,7 @@ router.post('/', async (req, res) => {
             parent_id: parent_id || null
         });
         await folder.save();
-        log(`Folder created: ${folder.name} by user ${user_id}`);
+        log(`Folder created: ${folder.name} by user ${user_id} in parent folder ${parent_id || 'root'}`);
         res.json(folder);
     } catch (err) {
         log(`Folder creation error: ${err.message}`);
@@ -55,7 +55,7 @@ router.get('/folder/:id', async (req, res) => {
             log(`Folder not found: ${req.params.id}`);
             return res.status(404).json({ msg: 'Folder not found' });
         }
-        log(`Folder retrieved: ${folder.name}`);
+        log(`Folder retrieved: ${folder.name} by user ${folder.user_id}`);
         res.json(folder);
     } catch (err) {
         log(`Get folder error: ${err.message}`);
@@ -77,7 +77,7 @@ router.put('/rename/:id', async (req, res) => {
         }
         folder.name = req.body.name;
         await folder.save();
-        log(`Folder renamed to: ${folder.name}`);
+        log(`Folder renamed to: ${folder.name} by user ${folder.user_id}`);
         res.json(folder);
     } catch (err) {
         log(`Rename folder error: ${err.message}`);
@@ -118,7 +118,7 @@ router.delete('/:id', async (req, res) => {
         await Folder.deleteMany({ parent_id: folder._id });
         // Remove the folder itself
         await Folder.deleteOne({ _id: folder._id });
-        log(`Folder and its contents deleted: ${folder.name}`);
+        log(`Folder and its contents deleted: ${folder.name} by user ${folder.user_id}`);
         res.json({ msg: 'Folder removed' });
     } catch (err) {
         log(`Delete folder error: ${err.message}`);
