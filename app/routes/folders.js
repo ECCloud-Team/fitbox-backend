@@ -4,6 +4,7 @@ const File = require('../models/File');
 const log = require('../middleware/logger'); // Import logger
 const multer = require('multer');
 const router = express.Router();
+const auth = require('../middleware/auth');
 
 // Konfigurasi Multer untuk menangani form-data
 const storage = multer.memoryStorage();
@@ -31,19 +32,20 @@ const buildFolderTree = async (userId, parentId = null) => {
 // @route   POST /folders
 // @desc    Create a new folder
 // @access  Public
-router.post('/', upload.none(), async (req, res) => {
+router.post('/', auth, upload.none(), async (req, res) => {
+    const userId = req.user.id
     try {
-        const { user_id, name, parent_id } = req.body;
+        const { name, parent_id } = req.body;
         const folder = new Folder({
-            user_id,
+            user_id: userId,
             name,
             parent_id: parent_id || null
         });
         await folder.save();
-        log(`Folder created: ${folder.name} by user ${user_id} in parent folder ${parent_id || 'root'}`, 'POST', user_id);
+        log(`Folder created: ${folder.name} by user ${userId} in parent folder ${parent_id || 'root'}`, 'POST', userId);
         res.json(folder);
     } catch (err) {
-        log(`Folder creation error: ${err.message}`, 'POST', req.body.user_id);
+        log(`Folder creation error: ${err.message}`, 'POST', userId);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -52,17 +54,18 @@ router.post('/', upload.none(), async (req, res) => {
 // @route   GET /folders/folder/:id
 // @desc    Get a folder by id
 // @access  Public
-router.get('/folder/:id', async (req, res) => {
+router.get('/folder/:id', auth, async (req, res) => {
+    const userId = req.user.id
     try {
         const folder = await Folder.findById(req.params.id);
         if (!folder) {
-            log(`Folder not found: ${req.params.id}`, 'GET', req.body.user_id);
+            log(`Folder not found: ${req.params.id}`, 'GET', userId);
             return res.status(404).json({ msg: 'Folder not found' });
         }
-        log(`Folder retrieved: ${folder.name} by user ${folder.user_id}`, 'GET', folder.user_id);
+        log(`Folder retrieved: ${folder.name} by user ${userId}`, 'GET', userId);
         res.json(folder);
     } catch (err) {
-        log(`Get folder error: ${err.message}`, 'GET', req.body.user_id);
+        log(`Get folder error: ${err.message}`, 'GET', userId);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -72,19 +75,20 @@ router.get('/folder/:id', async (req, res) => {
 // @route   PUT /folders/rename/:id
 // @desc    Rename a folder by id
 // @access  Public
-router.put('/rename/:id', async (req, res) => {
+router.put('/rename/:id', auth, async (req, res) => {
+    const userId = req.user.id
     try {
         const folder = await Folder.findById(req.params.id);
         if (!folder) {
-            log(`Folder not found for renaming: ${req.params.id}`, 'PUT', req.body.user_id);
+            log(`Folder not found for renaming: ${req.params.id}`, 'PUT', userId);
             return res.status(404).json({ msg: 'Folder not found' });
         }
         folder.name = req.body.name;
         await folder.save();
-        log(`Folder renamed to: ${folder.name} by user ${folder.user_id}`, 'PUT', folder.user_id);
+        log(`Folder renamed to: ${folder.name} by user ${userId}`, 'PUT', userId);
         res.json(folder);
     } catch (err) {
-        log(`Rename folder error: ${err.message}`, 'PUT', req.body.user_id);
+        log(`Rename folder error: ${err.message}`, 'PUT', userId);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -93,14 +97,15 @@ router.put('/rename/:id', async (req, res) => {
 // @route   GET /folders/:user_id
 // @desc    Get all folders and files for a user
 // @access  Public
-router.get('/:user_id', async (req, res) => {
+router.get('/', auth, async (req, res) => {
+    const userId = req.user.id
     try {
-        const folders = await Folder.find({ user_id: req.params.user_id });
-        const files = await File.find({ user_id: req.params.user_id });
-        log(`All folders and files retrieved for user ${req.params.user_id}`, 'GET', req.params.user_id);
+        const folders = await Folder.find({ user_id: userId });
+        const files = await File.find({ user_id: userId });
+        log(`All folders and files retrieved for user ${userId}`, 'GET', userId);
         res.json({ folders, files });
     } catch (err) {
-        log(`Get all folders and files error: ${err.message}`, 'GET', req.params.user_id);
+        log(`Get all folders and files error: ${err.message}`, 'GET', userId);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -109,11 +114,12 @@ router.get('/:user_id', async (req, res) => {
 // @route   DELETE /folders/:id
 // @desc    Delete a folder
 // @access  Public
-router.delete('/:id', async (req, res) => {
+router.delete('/:id',auth, async (req, res) => {
+    const userId = req.user.id
     try {
         const folder = await Folder.findById(req.params.id);
         if (!folder) {
-            log(`Folder not found for deletion: ${req.params.id}`, 'DELETE', req.body.user_id);
+            log(`Folder not found for deletion: ${req.params.id}`, 'DELETE', userId);
             return res.status(404).json({ msg: 'Folder not found' });
         }
         // Remove files in the folder
@@ -122,10 +128,10 @@ router.delete('/:id', async (req, res) => {
         await Folder.deleteMany({ parent_id: folder._id });
         // Remove the folder itself
         await Folder.deleteOne({ _id: folder._id });
-        log(`Folder and its contents deleted: ${folder.name} by user ${folder.user_id}`, 'DELETE', folder.user_id);
+        log(`Folder and its contents deleted: ${folder.name} by user ${userId}`, 'DELETE', userId);
         res.json({ msg: 'Folder removed' });
     } catch (err) {
-        log(`Delete folder error: ${err.message}`, 'DELETE', req.body.user_id);
+        log(`Delete folder error: ${err.message}`, 'DELETE', userId);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -135,13 +141,14 @@ router.delete('/:id', async (req, res) => {
 // @route   GET /folders/folder-tree/:user_id
 // @desc    Get all folders and files for a user
 // @access  Public
-router.get('/folder-tree/:user_id', async (req, res) => {
+router.get('/folder-tree/', auth, async (req, res) => {
+    const userId = req.user.id
     try {
-        const folderTree = await buildFolderTree(req.params.user_id);
-        log(`Folder tree retrieved for user: ${req.params.user_id}`, 'GET', req.params.user_id);
+        const folderTree = await buildFolderTree(userId);
+        log(`Folder tree retrieved for user: ${userId}`, 'GET', userId);
         res.json(folderTree);
     } catch (err) {
-        log(`Get folder tree error: ${err.message}`, 'GET', req.params.user_id);
+        log(`Get folder tree error: ${err.message}`, 'GET', userId);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -151,13 +158,14 @@ router.get('/folder-tree/:user_id', async (req, res) => {
 // @route   GET /folders/parent/:parent_id
 // @desc    Get all folders in a parent folder
 // @access  Public
-router.get('/parent/:parent_id', async (req, res) => {
+router.get('/parent/:parent_id', auth, async (req, res) => {
+    const userId = req.user.id
     try {
         const folders = await Folder.find({ parent_id: req.params.parent_id });
-        log(`Folders retrieved for parent: ${req.params.parent_id}`, 'GET', req.body.user_id);
+        log(`Folders retrieved for parent: ${req.params.parent_id}`, 'GET', userId);
         res.json(folders);
     } catch (err) {
-        log(`Get folders in parent error: ${err.message}`, 'GET', req.body.user_id);
+        log(`Get folders in parent error: ${err.message}`, 'GET', userId);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
@@ -167,13 +175,14 @@ router.get('/parent/:parent_id', async (req, res) => {
 // @route   GET /folders/root/:user_id
 // @desc    Get all folders in root folder
 // @access  Public
-router.get('/root/:user_id', async (req, res) => {
+router.get('/root/', auth, async (req, res) => {
+    const userId = req.user.id
     try {
-        const folders = await Folder.find({ user_id: req.params.user_id, parent_id: null });
-        log(`Root folders retrieved for user: ${req.params.user_id}`, 'GET', req.params.user_id);
+        const folders = await Folder.find({ user_id: userId, parent_id: null });
+        log(`Root folders retrieved for user: ${userId}`, 'GET', userId);
         res.json(folders);
     } catch (err) {
-        log(`Get root folders error: ${err.message}`, 'GET', req.params.user_id);
+        log(`Get root folders error: ${err.message}`, 'GET', userId);
         console.error(err.message);
         res.status(500).send('Server Error');
     }
