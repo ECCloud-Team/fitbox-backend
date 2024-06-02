@@ -83,12 +83,19 @@ const upload = multer({ storage });
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     const { user_id, folder_id } = req.body;
+    var folderId 
+    if (folder_id === "") {
+      folderId = null;
+    } else {
+      folderId = folder_id;
+    }
+
     const file = new File({
       user_id,
       filename: req.file.originalname,
       path: req.file.path,
       size: req.file.size,
-      folder_id: folder_id || null,
+      folder_id: folderId,
     });
     await file.save();
     res.json(file);
