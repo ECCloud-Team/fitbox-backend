@@ -1,69 +1,10 @@
 const express = require("express");
 const multer = require("multer");
 const File = require("../models/File");
+const log = require('../middleware/logger'); // Import logger
 const router = express.Router();
-const { Storage } = require("@google-cloud/storage");
 const path = require("path");
 const fs = require("fs");
-
-// // Google Cloud Storage setup
-// const storage = new Storage({
-//   projectId: process.env.GCLOUD_PROJECT_ID,
-//   keyFilename: process.env.GCLOUD_KEYFILE_PATH,
-// });
-
-// const bucket = storage.bucket(process.env.GCLOUD_BUCKET_NAME);
-
-// // Set up Multer for file storage
-// const upload = multer({
-//   storage: multer.memoryStorage(),
-// });
-
-// // @route   POST /files/upload
-// // @desc    Upload a file
-// // @access  Public
-// router.post("/upload", upload.single("file"), async (req, res) => {
-//   try {
-//     const { user_id, folder_id } = req.body;
-
-//     if (!req.file) {
-//       return res.status(400).send("No file uploaded.");
-//     }
-
-//     const fileName = `${Date.now()}-${req.file.originalname}`;
-//     const userFolder = `uploads/${user_id}/`;
-
-//     const blob = bucket.file(userFolder + fileName);
-//     const blobStream = blob.createWriteStream({
-//       resumable: false,
-//     });
-
-//     blobStream.on('error', (err) => {
-//       console.error(err);
-//       res.status(500).send("Server Error");
-//     });
-
-//     blobStream.on('finish', async () => {
-//       const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-
-//       const file = new File({
-//         user_id,
-//         filename: req.file.originalname,
-//         path: publicUrl,
-//         size: req.file.size,
-//         folder_id: folder_id || null,
-//       });
-
-//       await file.save();
-//       res.json(file);
-//     });
-
-//     blobStream.end(req.file.buffer);
-//   } catch (err) {
-//     console.error(err.message);
-//     res.status(500).send("Server Error");
-//   }
-// });
 
 // Set up Multer for file storage
 const storage = multer.diskStorage({
@@ -76,6 +17,12 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage });
+
+// Fungsi untuk menghitung total ukuran file
+const getTotalFileSize = async (user_id) => {
+  const files = await File.find({ user_id });
+  return files.reduce((total, file) => total + file.size, 0);
+};
 
 // @route   POST /files/upload
 // @desc    Upload a file
@@ -98,8 +45,10 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       folder_id: folderId,
     });
     await file.save();
+    log(`File uploaded: ${file.filename} (${file.size} bytes) by user ${user_id} in folder ${folder_id || 'root'}`, 'POST', user_id, file.size);
     res.json(file);
   } catch (err) {
+    log(`File upload error: ${err.message}`, 'POST', req.body.user_id);
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -109,14 +58,17 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 // @route   GET /files/file/:id
 // @desc    Get a file by id
 // @access  Public
-router.get("file/:id", async (req, res) => {
+router.get("/file/:id", async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) {
+      log(`File not found: ${req.params.id}`, 'GET', req.body.user_id);
       return res.status(404).json({ msg: "File not found" });
     }
+    log(`File retrieved: ${file.filename} by user ${file.user_id}`, 'GET', file.user_id, file.size);
     res.json(file);
   } catch (err) {
+    log(`Get file error: ${err.message}`, 'GET', req.body.user_id);
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -132,8 +84,10 @@ router.get("/root/:user_id", async (req, res) => {
       user_id: req.params.user_id,
       folder_id: null,
     });
+    log(`Files in root folder retrieved for user ${req.params.user_id}`, 'GET', req.params.user_id);
     res.json(files);
   } catch (err) {
+    log(`Get root files error: ${err.message}`, 'GET', req.params.user_id);
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -145,8 +99,11 @@ router.get("/root/:user_id", async (req, res) => {
 router.get("/:user_id", async (req, res) => {
   try {
     const files = await File.find({ user_id: req.params.user_id });
-    res.json(files);
+    const totalSize = await getTotalFileSize(req.params.user_id);
+    log(`All files retrieved for user ${req.params.user_id}. Total size: ${totalSize} bytes`, 'GET', req.params.user_id, totalSize);
+    res.json({ files, totalSize });
   } catch (err) {
+    log(`Get user files error: ${err.message}`, 'GET', req.params.user_id);
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -160,10 +117,13 @@ router.get("/download/:id", async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) {
+      log(`File not found for download: ${req.params.id}`, 'GET', req.body.user_id);
       return res.status(404).json({ msg: "File not found" });
     }
+    log(`File downloaded: ${file.filename} by user ${file.user_id}`, 'GET', file.user_id, file.size);
     res.download(file.path, file.filename);
   } catch (err) {
+    log(`Download file error: ${err.message}`, 'GET', req.body.user_id);
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -176,6 +136,7 @@ router.delete("/:id", async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) {
+      log(`File not found for deletion: ${req.params.id}`, 'DELETE', req.body.user_id);
       return res.status(404).json({ msg: "File not found" });
     }
 
@@ -185,6 +146,7 @@ router.delete("/:id", async (req, res) => {
     // Delete the file from storage
     fs.unlink(filePath, async (err) => {
       if (err) {
+        log(`File deletion error: ${err.message}`, 'DELETE', req.body.user_id);
         console.error(err.message);
         return res.status(500).send("Server Error");
       }
@@ -192,9 +154,11 @@ router.delete("/:id", async (req, res) => {
       // Remove the file document from the database
       await File.deleteOne({ _id: req.params.id });
 
+      log(`File deleted: ${file.filename} by user ${file.user_id}`, 'DELETE', file.user_id, file.size);
       res.json({ msg: "File removed" });
     });
   } catch (err) {
+    log(`Delete file error: ${err.message}`, 'DELETE', req.body.user_id);
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -208,6 +172,7 @@ router.put("/rename/:id", async (req, res) => {
     const { filename } = req.body;
     const file = await File.findById(req.params.id);
     if (!file) {
+      log(`File not found for renaming: ${req.params.id}`, 'PUT', req.body.user_id);
       return res.status(404).json({ msg: "File not found" });
     }
     // Extract the file extension from the current filename
@@ -216,8 +181,10 @@ router.put("/rename/:id", async (req, res) => {
     const newFilename = `${filename}${ext}`;
     file.filename = newFilename;
     await file.save();
+    log(`File renamed to: ${newFilename} by user ${file.user_id}`, 'PUT', file.user_id, file.size);
     res.json(file);
   } catch (err) {
+    log(`Rename file error: ${err.message}`, 'PUT', req.body.user_id);
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -229,8 +196,10 @@ router.put("/rename/:id", async (req, res) => {
 router.get("/folder/:folder_id", async (req, res) => {
   try {
     const files = await File.find({ folder_id: req.params.folder_id });
+    log(`Files retrieved in folder: ${req.params.folder_id}`, 'GET', req.body.user_id);
     res.json(files);
   } catch (err) {
+    log(`Get files in folder error: ${err.message}`, 'GET', req.body.user_id);
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -242,8 +211,10 @@ router.get("/folder/:folder_id", async (req, res) => {
 router.delete("/folder/:folder_id", async (req, res) => {
   try {
     await File.deleteMany({ folder_id: req.params.folder_id });
+    log(`All files deleted in folder: ${req.params.folder_id}`, 'DELETE', req.body.user_id);
     res.json({ msg: "Files removed" });
   } catch (err) {
+    log(`Delete files in folder error: ${err.message}`, 'DELETE', req.body.user_id);
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -256,12 +227,15 @@ router.put("/:id/folder/:folder_id", async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) {
+      log(`File not found for moving: ${req.params.id}`, 'PUT', req.body.user_id);
       return res.status(404).json({ msg: "File not found" });
     }
     file.folder_id = req.params.folder_id;
     await file.save();
+    log(`File moved to folder: ${req.params.folder_id} by user ${file.user_id}`, 'PUT', file.user_id, file.size);
     res.json(file);
   } catch (err) {
+    log(`Move file error: ${err.message}`, 'PUT', req.body.user_id);
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -277,8 +251,10 @@ router.put("/folder/:folder_id", async (req, res) => {
       { folder_id: req.params.folder_id },
       { folder_id: new_folder_id }
     );
+    log(`All files moved to folder: ${new_folder_id}`, 'PUT', req.body.user_id);
     res.json({ msg: "Files moved" });
   } catch (err) {
+    log(`Move files in folder error: ${err.message}`, 'PUT', req.body.user_id);
     console.error(err.message);
     res.status(500).send("Server Error");
   }
@@ -291,11 +267,14 @@ router.delete("/folder/:folder_id/file/:id", async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) {
+      log(`File not found for deletion in folder: ${req.params.id}`, 'DELETE', req.body.user_id);
       return res.status(404).json({ msg: "File not found" });
     }
     await file.remove();
+    log(`File removed from folder: ${req.params.folder_id} by user ${file.user_id}`, 'DELETE', file.user_id, file.size);
     res.json({ msg: "File removed" });
   } catch (err) {
+    log(`Delete file in folder error: ${err.message}`, 'DELETE', req.body.user_id);
     console.error(err.message);
     res.status(500).send("Server Error");
   }
